@@ -41,22 +41,26 @@ function checkUser(user) {
   }
 }
 client.on('chat', (channel, user, message, self) => {
-  if (user.mod || !self) {
-    if (message.startsWith('!startSo')) {
-      client.say(channel, `Empiezan los shouts en ${initialDelay} segundos`);
-      streamerShoutOut = [];
-      timer = initialDelay;
-      let contador = setInterval(() => {
-        if (timer <= 0) {
-          timer = 0;
-          clearInterval(contador);
-        } else {
-          timer -= 1;
-        }
-        console.log(timer);
-      }, 1000);
-    }
+  if (message.startsWith('!verGente')) {
+    client.say(channel, `Esta es la gente anunciada ${streamerShoutOut}`);
   }
+
+  if (message.startsWith('!startSo')) {
+    client.say(channel, `Empiezan los shouts en ${initialDelay} segundos`);
+    streamerShoutOut = [];
+    timer = initialDelay;
+
+    const contador = setInterval(() => {
+      if (timer <= 0) {
+        timer = 0;
+        clearInterval(contador);
+      } else {
+        timer -= 1;
+      }
+      console.log(timer);
+    }, 1000);
+  }
+
   checkUser(user['display-name']);
 });
 
