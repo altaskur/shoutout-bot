@@ -1,0 +1,29 @@
+{
+  "name": "shoutout-bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "/src/main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "node ./src/main.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/altaskur/shoutout-Bot.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/altaskur/shoutout-Bot/issues"
+  },
+  "homepage": "https://github.com/altaskur/shoutout-Bot#readme",
+  "devDependencies": {
+    "eslint": "^8.37.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.27.5"
+  },
+  "dependencies": {
+    "dotenv": "^16.0.3",
+    "tmi.js": "^1.8.5"
+  }
+}
