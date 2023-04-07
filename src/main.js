@@ -1,12 +1,12 @@
 const tmi = require('tmi.js');
 const streamerList = require('./streamerList');
+const options = require('./options');
 require('dotenv').config();
 
 let streamerShoutOut = [];
-
-const initialDelay = 10; // en milisegundos
-
-let timer = initialDelay;
+const shoutQueue = [];
+let queueStatus = false;
+let timer = options.initialDelay;
 
 const client = new tmi.Client({
   options: { debug: false },
@@ -33,22 +33,41 @@ client.on('connected', () => {
   console.log(`conectado al canal ${process.env.CHANNEL_NAME}`);
 });
 
-function checkUser(user) {
-  const miUser = user.toLowerCase();
-  if (streamerList.includes(miUser) && !streamerShoutOut.includes(miUser) && timer === 0) {
-    client.say(process.env.CHANNEL_NAME, `Pasaros todo el mundo por el canal de https://www.twitch.tv/${miUser}`);
-    streamerShoutOut.push(miUser);
+function processQueue() {
+  if (!queueStatus) {
+    if (shoutQueue.length > 0) {
+      queueStatus = true;
+      const miUser = shoutQueue.pop();
+      client.say(process.env.CHANNEL_NAME, `Pasaros todo el mundo por el canal de https://www.twitch.tv/${miUser}`);
+      streamerShoutOut.push(miUser);
+      client.say(process.env.CHANNEL_NAME, 'Entrando en espera');
+      setTimeout(() => {
+        client.say(process.env.CHANNEL_NAME, 'Comprobando la cola de shouts');
+        processQueue();
+      }, options.shoutDelay);
+    }
   }
 }
-client.on('chat', (channel, user, message, self) => {
+function runShoutQueue(user) {
+  if (!shoutQueue.includes(user)) shoutQueue.push(user);
+  processQueue();
+}
+function checkUser(user) {
+  const miUser = user.toLowerCase();
+  console.log(`comprobando al usuario ${miUser}`);
+  if (streamerList.includes(miUser) && !streamerShoutOut.includes(miUser) && timer === 0) {
+    runShoutQueue(miUser);
+  }
+}
+client.on('chat', (channel, user, message) => {
   if (message.startsWith('!verGente')) {
     client.say(channel, `Esta es la gente anunciada ${streamerShoutOut}`);
   }
 
   if (message.startsWith('!startSo')) {
-    client.say(channel, `Empiezan los shouts en ${initialDelay} segundos`);
+    client.say(channel, `Empiezan los shouts en ${options.initialDelay} segundos`);
     streamerShoutOut = [];
-    timer = initialDelay;
+    timer = options.initialDelay;
 
     const contador = setInterval(() => {
       if (timer <= 0) {
