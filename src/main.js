@@ -7,9 +7,14 @@ let streamerShoutOut = [];
 const shoutQueue = [];
 let queueStatus = false;
 let timer = options.initialDelay;
+let shoutStatus = false;
 
 const client = new tmi.Client({
   options: { debug: false },
+  connection: {
+    secure: true,
+    reconnect: true,
+  },
   identity: {
     username: process.env.BOT_USERNAME,
     password: process.env.TWITCH_OAUTH_TOKEN,
@@ -34,18 +39,15 @@ client.on('connected', () => {
 });
 
 function processQueue() {
-  if (!queueStatus) {
-    if (shoutQueue.length > 0) {
-      queueStatus = true;
-      const miUser = shoutQueue.pop();
-      client.say(process.env.CHANNEL_NAME, `Pasaros todo el mundo por el canal de https://www.twitch.tv/${miUser}`);
-      streamerShoutOut.push(miUser);
-      client.say(process.env.CHANNEL_NAME, 'Entrando en espera');
-      setTimeout(() => {
-        client.say(process.env.CHANNEL_NAME, 'Comprobando la cola de shouts');
-        processQueue();
-      }, options.shoutDelay);
-    }
+  if (!queueStatus && shoutQueue.length > 0) {
+    queueStatus = true;
+    const miUser = shoutQueue.pop();
+    client.say(process.env.CHANNEL_NAME, `Pasaros todo el mundo por el canal de https://www.twitch.tv/${miUser}`);
+    streamerShoutOut.push(miUser);
+    setTimeout(() => {
+      queueStatus = false;
+      processQueue();
+    }, options.shoutDelay);
   }
 }
 function runShoutQueue(user) {
@@ -54,33 +56,36 @@ function runShoutQueue(user) {
 }
 function checkUser(user) {
   const miUser = user.toLowerCase();
-  console.log(`comprobando al usuario ${miUser}`);
-  if (streamerList.includes(miUser) && !streamerShoutOut.includes(miUser) && timer === 0) {
+
+  if (streamerList.includes(miUser) && !streamerShoutOut.includes(miUser)) {
     runShoutQueue(miUser);
   }
 }
-client.on('chat', (channel, user, message) => {
+client.on('chat', (channel, user, message, self) => {
+  if (self) return;
   if (message.startsWith('!verGente')) {
     client.say(channel, `Esta es la gente anunciada ${streamerShoutOut}`);
   }
 
-  if (message.startsWith('!startSo')) {
-    client.say(channel, `Empiezan los shouts en ${options.initialDelay} segundos`);
+  if (message.startsWith('!startSo') && user['display-name'] === process.env.CHANNEL_NAME) {
     streamerShoutOut = [];
     timer = options.initialDelay;
 
-    const contador = setInterval(() => {
+    client.say(channel, `Empiezan los shouts en ${options.initialDelay} segundos`);
+
+    const initialCounter = setInterval(() => {
       if (timer <= 0) {
         timer = 0;
-        clearInterval(contador);
+        clearInterval(initialCounter);
+        shoutStatus = true;
+        client.say(channel, 'Empezamos con los shouts');
       } else {
         timer -= 1;
       }
-      console.log(timer);
     }, 1000);
   }
 
-  checkUser(user['display-name']);
+  if (shoutStatus) checkUser(user['display-name']);
 });
 
 client.connect();
