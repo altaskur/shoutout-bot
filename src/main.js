@@ -66,7 +66,7 @@ client.on('chat', (channel, user, message, self) => {
   if (message.startsWith('!verGente')) {
     client.say(channel, `Esta es la gente anunciada ${streamerShoutOut}`);
   }
-
+  if (message.startsWith('!stopSo')) shoutStatus = false;
   if (message.startsWith('!startSo') && user['display-name'] === process.env.CHANNEL_NAME) {
     streamerShoutOut = [];
     timer = options.initialDelay;
