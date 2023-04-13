@@ -1,7 +1,12 @@
+const fs = require('fs');
 const tmi = require('tmi.js');
-const streamerList = require('./streamerList');
+const path = require('path');
 const options = require('./options');
 require('dotenv').config();
+
+const file = fs.readFileSync(path.join(__dirname, 'streamerList.json'), 'utf-8');
+
+const streamerList = JSON.parse(file);
 
 let streamerShoutOut = [];
 const shoutQueue = [];
@@ -41,9 +46,10 @@ client.on('connected', () => {
 function processQueue() {
   if (!queueStatus && shoutQueue.length > 0) {
     queueStatus = true;
-    const miUser = shoutQueue.pop();
-    client.say(process.env.CHANNEL_NAME, `Pasaros todo el mundo por el canal de https://www.twitch.tv/${miUser}`);
-    streamerShoutOut.push(miUser);
+    const user = shoutQueue.pop();
+    client.say(process.env.CHANNEL_NAME, `Pasaros todo el mundo por el canal de https://www.twitch.tv/${user}`);
+
+    streamerShoutOut.push(user);
     setTimeout(() => {
       queueStatus = false;
       processQueue();
@@ -54,13 +60,18 @@ function runShoutQueue(user) {
   if (!shoutQueue.includes(user)) shoutQueue.push(user);
   processQueue();
 }
-function checkUser(user) {
-  const miUser = user.toLowerCase();
 
-  if (streamerList.includes(miUser) && !streamerShoutOut.includes(miUser)) {
-    runShoutQueue(miUser);
+function findStreamer(streamer) {
+  return streamerList.find((streamers) => streamers.name === streamer);
+}
+function checkUser(user) {
+  const userLowerCase = user.toLowerCase();
+
+  if (findStreamer(userLowerCase) && !streamerShoutOut.includes(userLowerCase)) {
+    runShoutQueue(userLowerCase);
   }
 }
+
 client.on('chat', (channel, user, message, self) => {
   if (self) return;
   if (message.startsWith('!verGente')) {
