@@ -101,6 +101,5 @@ client.on('chat', (channel, user, message, self) => {
 
   if (shoutStatus) checkUser(user['display-name']);
 });
-const buttons = document.querySelectorAll('input[type=button]');
 
 client.connect();
